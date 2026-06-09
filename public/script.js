@@ -61,8 +61,19 @@ const btnDeleteMark = $('#btnDeleteMark');
 const btnCancelAnnotation = $('#btnCancelAnnotation');
 const fontButtons = document.querySelectorAll('.font-btn');
 
-function getPublicOrigin() {
-  return location.origin + location.pathname;
+function buildBookmarkCode() {
+  const baseUrl = window.location.origin;
+  return `javascript:(function(){window.open('${baseUrl}/?url='+encodeURIComponent(location.href),'_blank');})();`;
+}
+
+function refreshBookmarklet() {
+  const link = $('#bookmarklet');
+  const codeEl = $('#bookmarkCode');
+  if (!link || !codeEl) return;
+
+  const code = buildBookmarkCode();
+  link.href = code;
+  codeEl.textContent = code;
 }
 
 function initTheme() {
@@ -117,6 +128,7 @@ function showView(name) {
   if (!isReading) {
     exitFocusMode();
     closeLinkModal();
+    refreshBookmarklet();
   }
 }
 
@@ -579,11 +591,6 @@ function initAnnotationEvents() {
   });
 }
 
-function buildBookmarkCode() {
-  const origin = getPublicOrigin();
-  return `javascript:(function(){window.open('${origin}?url='+encodeURIComponent(location.href),'_blank');})();`;
-}
-
 async function copyText(text, onSuccess, onFail) {
   try {
     await navigator.clipboard.writeText(text);
@@ -594,15 +601,15 @@ async function copyText(text, onSuccess, onFail) {
 }
 
 function initBookmarklet() {
-  const code = buildBookmarkCode();
   const link = $('#bookmarklet');
   const codeEl = $('#bookmarkCode');
+  if (!link || !codeEl) return;
 
-  link.href = code;
-  codeEl.textContent = code;
+  refreshBookmarklet();
   link.addEventListener('click', (e) => e.preventDefault());
 
   codeEl.addEventListener('click', () => {
+    const code = buildBookmarkCode();
     copyText(
       code,
       () => {
@@ -618,6 +625,8 @@ function initBookmarklet() {
       }
     );
   });
+
+  window.addEventListener('pageshow', refreshBookmarklet);
 }
 
 function initUrlParam() {
