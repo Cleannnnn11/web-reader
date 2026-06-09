@@ -12,13 +12,42 @@ const SHORT_CONTENT_THRESHOLD = 200;
 // 正文超过此长度时始终使用 Readability，不触发短内容回退（验收12）
 const NORMAL_CONTENT_THRESHOLD = 500;
 
-const FETCH_HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Accept:
-    'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-  'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7',
-};
+const BROWSER_USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+
+function buildFetchHeaders(targetUrl, attempt = 0) {
+  let referer = 'https://www.google.com/';
+  let secFetchSite = 'cross-site';
+
+  try {
+    const parsed = new URL(targetUrl);
+    referer = `${parsed.origin}/`;
+    secFetchSite = attempt === 0 ? 'none' : 'cross-site';
+  } catch {
+    // keep defaults
+  }
+
+  return {
+    'User-Agent': BROWSER_USER_AGENT,
+    Accept:
+      'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8,en-US;q=0.7',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'max-age=0',
+    Connection: 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    Referer: referer,
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': secFetchSite,
+    'Sec-Fetch-User': '?1',
+    'sec-ch-ua': '"Chromium";v="122", "Google Chrome";v="122", "Not_A Brand";v="99"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"',
+    DNT: '1',
+    Pragma: 'no-cache',
+  };
+}
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -737,7 +766,7 @@ async function fetchPage(url) {
       return await axios.get(url, {
         timeout: FETCH_TIMEOUT,
         responseType: 'text',
-        headers: FETCH_HEADERS,
+        headers: buildFetchHeaders(url, attempt),
         maxRedirects: 5,
         validateStatus: (status) => status >= 200 && status < 400,
       });
