@@ -69,6 +69,17 @@
           <div class="bookmark-tip">
             <p>将下方按钮拖拽至浏览器书签栏，即可在任意页面一键发送到澄阅阅读</p>
             <a class="bookmark-link" id="bookmarklet" href="#">📖 澄阅 · 阅读此页</a>
+            <script>
+              (function () {
+                var link = document.getElementById('bookmarklet');
+                if (!link) return;
+                var origin = window.location.origin;
+                link.href =
+                  "javascript:(function(){window.open('" +
+                  origin +
+                  "/?url='+encodeURIComponent(location.href),'_blank');})();";
+              })();
+            </script>
             <code class="bookmark-code" id="bookmarkCode" title="点击复制书签代码"></code>
             <p class="bookmark-code-hint">或点击上方代码复制到书签</p>
           </div>
